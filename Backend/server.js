@@ -6,7 +6,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 const userRouter = require("./routes/userRoutes");
-// const postRouter = require("./routes/postRoutes");
+const postRouter = require("./routes/postRoutes");
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/users", userRouter);
-// app.use("/api/posts", postRouter);
+app.use("/api/posts", postRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

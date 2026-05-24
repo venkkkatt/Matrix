@@ -7,6 +7,8 @@ const {
   registerUser,
   loginUser,
   getMyProfile,
+  followUser,
+  getUserProfile,
 } = require("../controllers/userController");
 
 const upload = require("../middleware/uploadMiddleware");
@@ -20,5 +22,7 @@ router.post(
 router.post("/login", loginUser);
 
 router.get("/me", protect, getMyProfile);
+router.get("/profile/:username", protect, getUserProfile);
+router.put("/follow/:id", protect, followUser);
 
 module.exports = router;

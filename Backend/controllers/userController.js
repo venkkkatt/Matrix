@@ -198,8 +198,69 @@ const getMyProfile = async (req, res) => {
   }
 };
 
+const followUser = async (req, res) => {
+    try {
+        const userToFollow = await User.findById(req.params.id);
+        const currentUser = await User.findById(req.user._id);
+
+        if(!userToFollow) {
+            return res.status(404).json({success: false, message: "No such User!"});
+        }
+
+        if (req.params.id === req.user._id.toString()) {
+            return res.status(400).json({ success: false, message: "You can't follow yourself" });
+        }
+
+        const isFollowing = currentUser.following.includes(req.params.id);
+
+        if (isFollowing) {
+            currentUser.following = currentUser.following.filter(
+                (id) => id.toString() !== req.params.id
+            );
+            userToFollow.followers = userToFollow.followers.filter(
+                (id) => id.toString() !== req.user._id.toString()
+            );
+            } else {
+            currentUser.following.push(req.params.id);
+            userToFollow.followers.push(req.user._id);
+        }
+
+        await currentUser.save();
+    await userToFollow.save();
+
+    res.status(200).json({
+      success: true,
+      following: !isFollowing,
+      message: isFollowing ? `Unfollowed ${userToFollow.userName}` : `Following ${userToFollow.userName}`,
+    });
+    } catch (error) {
+        console.error("FOLLOW ERROR:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+}
+
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findOne({ userName: req.params.username })
+      .populate("followers", "userName profilePic")
+      .populate("following", "userName profilePic");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("GET PROFILE ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getMyProfile,
+  followUser,
+  getUserProfile,
+  
 };

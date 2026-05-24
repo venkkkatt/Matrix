@@ -40,7 +40,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Male", "Female", "Other"],
     },
-    userId: { type: String, unique: true },
 
     bio: { 
         type: String, 
@@ -77,7 +76,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
 
   this.password = await bcrypt.hash(this.password, 10);
