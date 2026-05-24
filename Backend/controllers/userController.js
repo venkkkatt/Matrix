@@ -119,16 +119,16 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { userName, password } = req.body;
 
-    if (!email || !password) {
+    if (!userName || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Username and password are required",
       });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ userName }).select("+password");
 
     if (!user) {
       return res.status(401).json({
@@ -262,5 +262,5 @@ module.exports = {
   getMyProfile,
   followUser,
   getUserProfile,
-  
+
 };
