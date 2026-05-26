@@ -21,8 +21,19 @@ const uploadToCloudinary = (buffer) => {
   });
 };
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 const registerUser = async (req, res) => {
   try {
+
+    console.log("REQ FILE:", req.file);
+
+
     const {
       userName,
       fullName,
@@ -32,6 +43,7 @@ const registerUser = async (req, res) => {
       dept,
       phone,
       bio,
+
     } = req.body;
 
     if (!userName || !fullName || !email || !password) {
@@ -94,17 +106,11 @@ const registerUser = async (req, res) => {
 
     const token = user.generateJWT();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, cookieOptions);
 
     res.status(201).json({
       success: true,
       message: `Hello, ${user.userName}`,
-      token,
       user,
     });
   } catch (error) {
@@ -148,17 +154,11 @@ const loginUser = async (req, res) => {
 
     const token = user.generateJWT();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, cookieOptions);
 
     res.status(200).json({
       success: true,
       message: `Hello, ${user.userName}`,
-      token,
       user,
     });
   } catch (error) {
@@ -170,6 +170,15 @@ const loginUser = async (req, res) => {
     });
   }
 };
+
+const logoutUser = async (req, res) => {
+  res.clearCookie("token", cookieOptions);
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+}
 
 const getMyProfile = async (req, res) => {
   try {
@@ -259,6 +268,7 @@ const getUserProfile = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  logoutUser,
   getMyProfile,
   followUser,
   getUserProfile,

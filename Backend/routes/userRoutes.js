@@ -6,6 +6,7 @@ const protect = require("../middleware/authMiddleware");
 const {
   registerUser,
   loginUser,
+  logoutUser,
   getMyProfile,
   followUser,
   getUserProfile,
@@ -20,7 +21,7 @@ router.post(
 );
 
 router.post("/login", loginUser);
-
+router.post("/logout", protect, logoutUser);
 router.get("/me", protect, getMyProfile);
 router.get("/profile/:username", protect, getUserProfile);
 router.put("/follow/:id", protect, followUser);

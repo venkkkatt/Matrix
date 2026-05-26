@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      sparse: true,
       unique: true,
       lowercase: true,
       trim: true,
@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       select: false,
+      sparse: true,
       match: [/^[0-9]{10}$/, "Phone number must contain exactly 10 digits"],
     },
     fullName: {
