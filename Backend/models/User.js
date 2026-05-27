@@ -47,6 +47,13 @@ const userSchema = new mongoose.Schema(
         default: "",
     },
 
+    savedPosts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+    }
+    ],
+    
     dept: String,
 
     role: {
@@ -72,6 +79,7 @@ const userSchema = new mongoose.Schema(
     },
     ],
   },
+  
   { timestamps: true }
 );
 

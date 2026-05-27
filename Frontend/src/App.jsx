@@ -4,7 +4,12 @@ import useAuthStore from "./store/authStore";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home";
+import Profile from "./pages/Profile"
 import Layout from "./components/layout/Layout";
+import Events from "./pages/Events"
+import Explore from "./pages/Explore";
+import Communities from "./pages/Communities";
+import Popular from "./pages/Popular";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -25,6 +30,12 @@ export default function App() {
         <Route path="/register" element={<AuthRoute><Register /></AuthRoute>} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<Home />} />
+          <Route path="/profile/:username" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="events" element={<Events />} />
+          <Route path="explore" element={<Explore />}></Route>
+          <Route path="communities" element={<Communities />}></Route>
+          <Route path="popular" element={<Popular />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>

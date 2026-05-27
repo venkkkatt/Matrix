@@ -2,6 +2,7 @@ const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
 const validator = require("validator");
+const Post = require("../models/Post")
 
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -265,6 +266,81 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const savePost = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const postId = req.params.postId;
+
+    const alreadySaved = user.savedPosts.includes(postId);
+
+    if (alreadySaved) {
+      user.savedPosts = user.savedPosts.filter(
+        (id) => id.toString() !== postId
+      );
+    } else {
+      user.savedPosts.push(postId);
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      saved: !alreadySaved,
+      message: alreadySaved ? "Post unsaved" : "Post saved",
+    });
+  } catch (error) {
+    console.error("SAVE POST ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+const getSavedPosts = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: "savedPosts",
+        populate: { path: "author", select: "userName fullName profilePic dept" },
+      });
+
+    res.status(200).json({
+      success: true,
+      savedPosts: user.savedPosts,
+    });
+  } catch (error) {
+    console.error("GET SAVED ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+const getUserPosts = async (req, res) => {
+  try {
+    const user = await User.findOne({ userName: req.params.username });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    const posts = await Post.find({ author: user._id })
+      .populate("author", "userName fullName profilePic dept")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, posts });
+  } catch (error) {
+    console.error("GET USER POSTS ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({ _id: { $ne: req.user._id } })
+      .select("userName fullName profilePic dept followers createdAt")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -272,5 +348,9 @@ module.exports = {
   getMyProfile,
   followUser,
   getUserProfile,
+  savePost,
+  getSavedPosts,
+  getUserPosts, 
+  getAllUsers
 
 };

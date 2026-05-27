@@ -36,7 +36,7 @@ const createPost = async (req, res) => {
       images,
     });
 
-    await post.populate("author", "userName profilePic");
+    await post.populate("author", "fullName userName profilePic");
 
     res.status(201).json({
       success: true,
@@ -51,10 +51,10 @@ const createPost = async (req, res) => {
 const getFeed = async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate("author", "userName profilePic")
+      .populate("author", "fullName userName profilePic")
       .populate("comments.user", "userName profilePic")
       .sort({ createdAt: -1 });
-
+    console.log(posts)
     res.status(200).json({
       success: true,
       posts,
@@ -68,7 +68,7 @@ const getFeed = async (req, res) => {
 const getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate("author", "userName profilePic")
+      .populate("author", "fullName userName profilePic dept")
       .populate("comments.user", "userName profilePic");
 
     if (!post) {
@@ -172,11 +172,50 @@ const deletePost = async (req, res) => {
   }
 };
 
+const deleteComment = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ success: false, message: "Post not found" });
+    }
+
+    const comment = post.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({ success: false, message: "Comment not found" });
+    }
+
+    const isCommentOwner = comment.user.toString() === req.user._id.toString();
+    const isPostOwner = post.author.toString() === req.user._id.toString();
+
+    if (!isCommentOwner && !isPostOwner) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+
+    post.comments = post.comments.filter(
+      (c) => c._id.toString() !== req.params.commentId
+    );
+
+    await post.save();
+    await post.populate("comments.user", "userName profilePic");
+
+    res.status(200).json({
+      success: true,
+      comments: post.comments,
+    });
+  } catch (error) {
+    console.error("DELETE COMMENT ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 module.exports = {
   createPost,
   getFeed,
   getPost,
   likePost,
   addComment,
+  deleteComment,
   deletePost,
 };
