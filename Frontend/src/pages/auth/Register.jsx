@@ -51,7 +51,7 @@ export default function Register() {
 
 
   return (
-    <div className="min-h-screen bg-[#010104] text-white overflow-hidden relative">
+    <div className="font-array min-h-screen bg-[#010104] text-white overflow-hidden relative">
 
       <div className="absolute top-[-150px] left-[-150px] w-[400px] h-[400px] bg-[#022003] blur-[120px] rounded-full" />
 
@@ -63,7 +63,7 @@ export default function Register() {
           </div>
         </div>
 
-        <div className="font-clash flex items-center justify-center px-6 py-10">
+        <div className="font-array flex items-center justify-center px-6 py-10">
           <div className="w-full max-w-md">
             <div className="lg:hidden mb-10">
               <h1 className="text-5xl font-array tracking-tight">
@@ -73,7 +73,7 @@ export default function Register() {
 
             <div className="">
               <div className="mb-8">
-                <h2 className="font-clash text-7xl">
+                <h2 className="font-array text-7xl">
                   Create Account
                 </h2>
 
@@ -304,7 +304,7 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 mt-2"
+                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-black flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 mt-2"
                 >
 
                   {loading && (

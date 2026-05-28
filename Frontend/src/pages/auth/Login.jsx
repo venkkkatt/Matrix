@@ -75,7 +75,7 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="font-clash flex items-center justify-center px-6">
+        <div className="font-array flex items-center justify-center px-6">
 
           <div className="w-full max-w-md">
 
@@ -93,7 +93,7 @@ export default function Login() {
 
               <div className="mb-8">
 
-                <h2 className="text-3xl font-bold tracking-tight">
+                <h2 className="text-3xl tracking-tight">
                   Welcome back
                 </h2>
 
@@ -104,7 +104,7 @@ export default function Login() {
 
               <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="space-y-5"
+                className="space-y-5 font-clash"
               >
                 <div>
 
@@ -173,7 +173,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 mt-2"
+                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-black flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 mt-2"
                 >
                   {loading && (
                     <Loader2
