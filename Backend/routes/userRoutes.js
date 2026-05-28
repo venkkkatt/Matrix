@@ -14,7 +14,8 @@ const {
   savePost,
   getSavedPosts,
   getUserPosts, 
-  getAllUsers
+  getAllUsers,
+  updateProfile
 } = require("../controllers/userController");
 
 const upload = require("../middleware/uploadMiddleware");
@@ -29,6 +30,7 @@ router.put("/save/:postId", protect, savePost);
 router.get("/saved", protect, getSavedPosts);
 router.get("/profile/:username/posts", protect, getUserPosts);
 router.get("/all", protect, getAllUsers);
+router.put("/update", protect, upload.single("profilePic"), updateProfile);
 
 
 router.get("/suggestions", protect, async (req, res) => {
@@ -53,6 +55,22 @@ router.get("/search", protect, async (req, res) => {
       _id: { $ne: req.user._id },
     }).select("userName fullName profilePic dept").limit(10);
     res.status(200).json({ success: true, users });
+  } catch {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
+router.put("/change-password", protect, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id).select("+password");
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Current password is incorrect" });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.status(200).json({ success: true, message: "Password changed" });
   } catch {
     res.status(500).json({ success: false, message: "Server Error" });
   }

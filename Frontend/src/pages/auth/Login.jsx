@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090207] text-white overflow-hidden relative">
+    <div className="min-h-screen bg-[#010104] text-white overflow-hidden relative">
 
       <div className="absolute top-[-150px] left-[-150px] w-[400px] h-[400px] bg-[#022003] blur-[120px] rounded-full" />
 

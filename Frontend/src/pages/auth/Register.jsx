@@ -13,21 +13,13 @@ import useAuthStore from "../../store/authStore";
 
 export default function Register() {
   const { register, handleSubmit, formState: { errors },} = useForm();
-
   const navigate = useNavigate();
-
   const { login } = useAuthStore();
-
   const [loading, setLoading] = useState(false);
-
   const [profilePicFile, setProfilePicFile] = useState(null);
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [preview, setPreview] = useState("");
-
   const inputClass = "w-full bg-white/[0.04] border border-white/10 focus:border-green-400/50 focus:bg-green-400/[0.03] transition-all outline-none rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600";
-
 
   const onSubmit = async (data) => {
   try {
@@ -59,38 +51,28 @@ export default function Register() {
 
 
   return (
-    <div className="min-h-screen bg-[#090207] text-white overflow-hidden relative">
+    <div className="min-h-screen bg-[#010104] text-white overflow-hidden relative">
 
       <div className="absolute top-[-150px] left-[-150px] w-[400px] h-[400px] bg-[#022003] blur-[120px] rounded-full" />
 
       <div className="absolute bottom-[-150px] right-[-150px] w-[400px] h-[400px] bg-green-600/10 blur-[120px] rounded-full" />
 
       <div className="relative z-10 min-h-screen grid">
-
         <div className="hidden lg:flex flex-col justify-center px-24">
-
           <div>
-            
           </div>
-
         </div>
 
         <div className="font-clash flex items-center justify-center px-6 py-10">
-
           <div className="w-full max-w-md">
-
             <div className="lg:hidden mb-10">
-
               <h1 className="text-5xl font-array tracking-tight">
                 MATRIX
               </h1>
-
             </div>
 
             <div className="">
-
               <div className="mb-8">
-
                 <h2 className="font-clash text-7xl">
                   Create Account
                 </h2>
@@ -98,14 +80,12 @@ export default function Register() {
                 <p className="text-zinc-500 mt-2 text-sm">
                   Enter your details to continue
                 </p>
-
               </div>
 
               <form
                 onSubmit={handleSubmit(onSubmit)}
                 className="space-y-5 font-clash"
               >
-
                 <div className="flex flex-col items-center">
 
                   <label
@@ -126,7 +106,6 @@ export default function Register() {
                       transition-all
                     "
                   >
-
                     {preview ? (
                       <img
                         src={preview}
@@ -188,7 +167,6 @@ export default function Register() {
                     })}
                     className="w-full bg-white/[0.04] border border-white/10 focus:border-green-400/50 focus:bg-green-400/[0.03] transition-all outline-none rounded-2xl px-4 py-3 text-sm"
                   />
-
                   {errors.fullName && (
                     <p className="text-red-400 text-xs mt-2">
                       {
@@ -197,15 +175,11 @@ export default function Register() {
                       }
                     </p>
                   )}
-
                 </div>
-
                 <div>
-
                   <label className="text-sm text-zinc-400 block mb-2">
                     Username
                   </label>
-
                   <input
                     type="text"
                     placeholder="Enter username"
@@ -215,7 +189,6 @@ export default function Register() {
                     })}
                     className="w-full bg-white/[0.04] border border-white/10 focus:border-green-400/50 focus:bg-green-400/[0.03] transition-all outline-none rounded-2xl px-4 py-3 text-sm"
                   />
-
                   {errors.userName && (
                     <p className="text-red-400 text-xs mt-2">
                       {
@@ -224,11 +197,8 @@ export default function Register() {
                       }
                     </p>
                   )}
-
                 </div>
-
                 <div>
-
                   <label className="text-sm text-zinc-400 block mb-2">
                     Email
                   </label>
@@ -242,7 +212,6 @@ export default function Register() {
                     })}
                     className="w-full bg-white/[0.04] border border-white/10 focus:border-green-400/50 focus:bg-green-400/[0.03] transition-all outline-none rounded-2xl px-4 py-3 text-sm"
                   />
-
                   {errors.email && (
                     <p className="text-red-400 text-xs mt-2">
                       {
@@ -250,17 +219,13 @@ export default function Register() {
                       }
                     </p>
                   )}
-
                 </div>
 
                 <div>
-
                   <label className="text-sm text-zinc-400 block mb-2">
                     Password
                   </label>
-
                   <div className="relative">
-
                     <input
                       type={
                         showPassword
@@ -274,7 +239,6 @@ export default function Register() {
                       })}
                       className="w-full bg-white/[0.04] border border-white/10 focus:border-green-400/50 focus:bg-green-400/[0.03] transition-all outline-none rounded-2xl px-4 py-3 text-sm"
                     />
-
                     <button
                       type="button"
                       onClick={() =>
@@ -290,7 +254,6 @@ export default function Register() {
                         <Eye size={18} />
                       )}
                     </button>
-
                   </div>
 
                   {errors.password && (
@@ -356,23 +319,18 @@ export default function Register() {
                     : "Create Account"}
 
                 </button>
-
               </form>
 
               <div className="mt-8 pt-6 border-t border-white/5 text-center">
-
                 <p className="text-sm text-zinc-500">
                   Already have an account?{" "}
-
                   <Link
                     to="/login"
                     className="text-green-400 hover:text-green-300 transition-colors"
                   >
                     Sign in
                   </Link>
-
                 </p>
-
               </div>
 
             </div>

@@ -50,7 +50,7 @@ const createPost = async (req, res) => {
 
 const getFeed = async (req, res) => {
   try {
-    const posts = await Post.find()
+    const posts = await Post.find( {community: null})
       .populate("author", "fullName userName profilePic")
       .populate("comments.user", "userName profilePic")
       .sort({ createdAt: -1 });

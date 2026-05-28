@@ -10,6 +10,8 @@ import Events from "./pages/Events"
 import Explore from "./pages/Explore";
 import Communities from "./pages/Communities";
 import Popular from "./pages/Popular";
+import Settings from "./pages/Settings";
+import CommunityDetail from "./pages/CommunityDetail";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -36,6 +38,10 @@ export default function App() {
           <Route path="explore" element={<Explore />}></Route>
           <Route path="communities" element={<Communities />}></Route>
           <Route path="popular" element={<Popular />}></Route>
+          <Route path="settings" element={<Settings />} />
+          <Route path="communities/:id" element={<CommunityDetail />} />
+
+
         </Route>
       </Routes>
     </BrowserRouter>

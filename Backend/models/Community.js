@@ -33,6 +33,12 @@ const communitySchema = new mongoose.Schema(
       enum: ["open", "private"],
       default: "open",
     },
+    joinRequests: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
   },
   { timestamps: true }
 );

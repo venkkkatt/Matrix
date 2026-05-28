@@ -341,6 +341,53 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { fullName, userName, bio, dept, gender, phone } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (userName && userName !== user.userName) {
+      const existing = await User.findOne({ userName });
+      if (existing) {
+        return res.status(409).json({ success: false, message: "Username already taken" });
+      }
+    }
+
+    if (fullName) user.fullName = fullName;
+    if (userName) user.userName = userName;
+    if (bio !== undefined) user.bio = bio;
+    if (dept !== undefined) user.dept = dept;
+    if (gender) user.gender = gender;
+    if (phone !== undefined) user.phone = phone;
+
+    if (req.file) {
+      if (user.profilePic?.public_id) {
+        await cloudinary.uploader.destroy(user.profilePic.public_id);
+      }
+      const uploaded = await uploadToCloudinary(req.file.buffer);
+      user.profilePic = {
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+      };
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated",
+      user,
+    });
+  } catch (error) {
+    console.error("UPDATE PROFILE ERROR:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -351,6 +398,6 @@ module.exports = {
   savePost,
   getSavedPosts,
   getUserPosts, 
-  getAllUsers
-
+  getAllUsers, 
+  updateProfile
 };

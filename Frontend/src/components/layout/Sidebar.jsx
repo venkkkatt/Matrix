@@ -6,6 +6,8 @@ import CreatePostModal from "../feed/CreatePostModal";
 import { logoutApi } from "../../api/authApi";
 import SearchPanel from "./SearchPanel";
 import NotificationsPanel from "./NotificationsPanel";
+import { Settings } from "lucide-react";
+
 
 import {
   Home, Search, Compass, TrendingUp,
@@ -21,9 +23,6 @@ export default function Sidebar({ collapsed, onToggle }) {
   const [showLogout, setShowLogout] = useState(false);
   const popupRef = useRef(null)
   const [activePanel, setActivePanel] = useState(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newPost, setNewPost] = useState(null);
-
   
   const navGroups = [
   {
@@ -50,7 +49,7 @@ export default function Sidebar({ collapsed, onToggle }) {
   {
     items: [
       { icon: Bell,       label: "Notifications", path: "null", panel: "notifications" },
-      { icon: User,       label: "Profile",       path: `/profile/${user?.userName}` },
+      { icon: Settings,       label: "Settings",       path: `/settings` },
     ]
   },
 ];
@@ -156,12 +155,10 @@ export default function Sidebar({ collapsed, onToggle }) {
         }
       </button>
 
-      {/* Logo */}
       <Link to="/" className={`font-array font-black tracking-tight text-white px-2 mb-6 transition-all ${collapsed ? "text-xl" : "text-2xl lg:text-3xl"}`}>
         {collapsed ? "M" : "MATRIX"}
       </Link>
 
-      {/* Nav */}
       <nav className="flex-1 flex flex-col gap-4">
         {navGroups.map((group, gi) => (
           <div key={gi} className="flex flex-col gap-0.5">
@@ -253,7 +250,9 @@ export default function Sidebar({ collapsed, onToggle }) {
                   {!collapsed && "Logout"}
                 </button>
               </div>
+              
             )}
+           
           </div>
         )}
       </div>

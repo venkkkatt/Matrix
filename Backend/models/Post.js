@@ -28,6 +28,11 @@ const postSchema = new mongoose.Schema(
       required: true, 
       trim: true,
     },
+    community: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Community",
+      default: null,
+    },
     images: [
       {
         url: String,

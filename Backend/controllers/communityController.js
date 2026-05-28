@@ -66,32 +66,73 @@ const joinCommunity = async (req, res) => {
     const community = await Community.findById(req.params.id);
 
     if (!community) {
-      return res.status(404).json({ success: false, message: "Community not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Community not found",
+      });
     }
 
-    const isMember = community.members.includes(req.user._id);
+    const userId = req.user._id.toString();
+
+    const isMember = community.members.some(
+      (m) => m.toString() === userId
+    );
 
     if (isMember) {
       community.members = community.members.filter(
-        (id) => id.toString() !== req.user._id.toString()
+        (m) => m.toString() !== userId
       );
-    } else {
-      community.members.push(req.user._id);
+
+      await community.save();
+
+      return res.status(200).json({
+        success: true,
+        joined: false,
+        message: "Left community",
+      });
     }
+
+    if (community.type === "open") {
+      community.members.push(req.user._id);
+
+      await community.save();
+
+      return res.status(200).json({
+        success: true,
+        joined: true,
+        message: "Joined community",
+      });
+    }
+
+    const alreadyRequested = community.joinRequests.some(
+      (r) => r.toString() === userId
+    );
+
+    if (alreadyRequested) {
+      return res.status(400).json({
+        success: false,
+        message: "Request already sent",
+      });
+    }
+
+    community.joinRequests.push(req.user._id);
 
     await community.save();
 
     res.status(200).json({
       success: true,
-      joined: !isMember,
-      message: isMember ? "Left community" : "Joined community",
-      membersCount: community.members.length,
+      requested: true,
+      message: "Join request sent",
     });
-  } catch (error) {
-    console.error("JOIN COMMUNITY ERROR:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+
+  } catch {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
+
 
 const createCommunityPost = async (req, res) => {
   try {
@@ -101,15 +142,20 @@ const createCommunityPost = async (req, res) => {
       return res.status(404).json({ success: false, message: "Community not found" });
     }
 
-    if (!community.members.includes(req.user._id)) {
+    const isMember = community.members.some(
+      (m) => m.toString() === req.user._id.toString()
+    );
+
+    if (!isMember) {
       return res.status(403).json({ success: false, message: "Join the community to post" });
     }
 
-    const { caption } = req.body;
+    const { caption, communityId } = req.body;
 
-    if (!caption) {
-      return res.status(400).json({ success: false, message: "Caption is required" });
+    if (!caption && !communityId) {
+      return res.status(400).json({ success: false, message: "Caption and ID is required" });
     }
+    
 
     const post = await Post.create({
       author: req.user._id,
@@ -117,7 +163,7 @@ const createCommunityPost = async (req, res) => {
       community: community._id,
     });
 
-    await post.populate("author", "userName profilePic");
+    await post.populate("author", "userName fullName profilePic dept");
 
     res.status(201).json({ success: true, post });
   } catch (error) {
@@ -134,8 +180,19 @@ const getCommunityPosts = async (req, res) => {
       return res.status(404).json({ success: false, message: "Community not found" });
     }
 
+    const isMember = community.members.some(
+      (m) => m.toString() === req.user._id.toString()
+    );
+
+    if (community.type === "private" && !isMember) {
+      return res.status(403).json({
+        success: false,
+        message: "Private community",
+      });
+    }
+
     const posts = await Post.find({ community: req.params.id })
-      .populate("author", "userName profilePic")
+      .populate("author", "userName fullName profilePic dept")
       .populate("comments.user", "userName profilePic")
       .sort({ createdAt: -1 });
 
