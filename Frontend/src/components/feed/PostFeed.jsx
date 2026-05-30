@@ -5,6 +5,7 @@ import PostCard from "./PostCard";
 import { Link } from "react-router-dom";
 import PostModal from "./PostModal";
 import {toast} from "sonner";
+import usePostStore from "@/store/postStore";
 
 
 export default function PostFeed({
@@ -14,12 +15,15 @@ export default function PostFeed({
   subtitle,
   emptyMessage,
 }) {
-  const [posts, setPosts] = useState([]);
+  // const [posts, setPosts] = useState([]);
+  const posts = usePostStore((s) => s.posts);
+  const setPosts = usePostStore((s) => s.setPosts);
   const [loading, setLoading] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState(null);
-  
+  const removePost = usePostStore((s) => s.removePost);
   const { user, login } = useAuthStore();
   const selectedPost = posts.find((p) => p._id === selectedPostId) || null;
+  const updatePost = usePostStore((s) => s.updatePost);
 
 
   useEffect(() => {
@@ -64,38 +68,38 @@ export default function PostFeed({
   const handleLike = async (postId) => {
     try {
       await api.put(`/posts/${postId}/like`);
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p._id !== postId) return p;
-          const alreadyLiked = p.likes.includes(user._id);
-          return {
-            ...p,
-            likes: alreadyLiked
-              ? p.likes.filter((id) => id !== user._id)
-              : [...p.likes, user._id],
-          };
-        })
-      );
+      
+     updatePost(postId, (p) => {
+      const alreadyLiked = p.likes.includes(user._id);
+
+      return {
+        ...p,
+        likes: alreadyLiked
+          ? p.likes.filter((id) => id !== user._id)
+          : [...p.likes, user._id],
+      };
+    });
     } catch {
       toast.error("Failed to like");
     }
   };
 
   const handleCommentAdded = (postId, newComments) => {
-  setPosts((prev) =>
-    prev.map((p) =>
-      p._id === postId ? { ...p, comments: newComments } : p
-    )
-  );
-};
-    const handleDelete = async (e) => {
+    updatePost(postId, (p) => ({
+      ...p,
+      comments: newComments,
+    }));
+  };
+  
+  const handleDelete = async (e, postId) => {
     e.stopPropagation();
     try {
-      await api.delete(`/posts/${post._id}`);
+      await api.delete(`/posts/${postId}`);
+      removePost(postId);
       toast.success("Post deleted");
-      onDelete?.(post._id);
-      setShowMenu(false);
-    } catch {
+      
+    } catch (e) {
+      console.log(e)
       toast.error("Failed to delete post");
     }
   };

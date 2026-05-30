@@ -100,7 +100,7 @@ export default function PostCard({ post, onLike, onClick, onDelete, onSaveToggle
                   </button>
                   <div className="border-t border-white/5" />
                   <button
-                    onClick={(e) => {e.stopPropagation(); onDelete(post._id); setShowMenu(false);}}
+                    onClick={(e) => {onDelete(e, post._id); setShowMenu(false);}}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-400 hover:bg-red-500/10 transition-all"
                   >
                     <Trash2 size={14} />

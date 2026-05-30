@@ -3,6 +3,7 @@ import { X, Image, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../api/axios";
 import useAuthStore from "../../store/authStore";
+import usePostStore from "@/store/postStore";
 import Avatar from "../shared/Avatar";
 
 export default function CreatePostModal({ onClose, onPostCreated }) {
@@ -13,6 +14,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
   const [currentPreview, setCurrentPreview] = useState(0);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const addPost = usePostStore((s) => s.addPost);
 
   const handleImages = (files) => {
     const arr = Array.from(files);
@@ -51,6 +53,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
       const res = await api.post("/posts/create", formData);
       toast.success("Post created!");
       onPostCreated?.(res.data.post);
+      addPost(res.data.post);
       onClose();
     } catch {
       toast.error("Failed to create post");

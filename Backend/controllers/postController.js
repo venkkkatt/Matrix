@@ -264,6 +264,7 @@ const getTrendingPosts = asyncHandler(async (req, res, next) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const posts = await Post.find({
+      community: null,
       createdAt: { $gte: sevenDaysAgo },
     })
       .populate("author", "userName fullName profilePic dept")
