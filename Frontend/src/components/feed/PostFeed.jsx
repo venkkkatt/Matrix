@@ -24,7 +24,9 @@ export default function PostFeed({
   const { user, login } = useAuthStore();
   const selectedPost = posts.find((p) => p._id === selectedPostId) || null;
   const updatePost = usePostStore((s) => s.updatePost);
+  const regexx = /^\/users\/profile\/([^\/]+)\/posts$/
 
+  const isProfile = regexx.test(endpoint) || endpoint === "/users/saved"
 
   useEffect(() => {
     fetchPosts();
@@ -132,12 +134,14 @@ export default function PostFeed({
         <div className="text-center py-24">
           <p className="text-5xl mb-3">📭</p>
           <p className="text-white/40 font-medium">No posts yet</p>
-          <p className="text-white/20 text-[13px] mt-1">
+         {!isProfile ? <>
+         <p className="text-white/20 text-[13px] mt-1">
             Follow people to see posts
           </p>
-          <Link to="./explore">
+          <Link to="/explore">
             <button className="mt-2 text-2xl text-white/70 hover:text-white hover:bg-white/10 transition-all py-1.5 px-3 rounded-xl">Explore</button>
-          </Link>
+          </Link> 
+          </> : <></>}
         </div>
       ) : (
         <div className="space-y-3">

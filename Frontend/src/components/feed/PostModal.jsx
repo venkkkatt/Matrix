@@ -29,12 +29,12 @@ export default function PostModal({ post, onClose, onLike, onCommentAdded, onSav
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex"
+        className="w-full h-full sm:max-w-4xl rounded-t-2xl sm:rounded-2xl flex flex-col md:flex-row max-h-[85vh]"
         style={{
           background: "rgba(15,18,15,0.95)",
           backdropFilter: "blur(20px)",
@@ -43,7 +43,7 @@ export default function PostModal({ post, onClose, onLike, onCommentAdded, onSav
         onClick={(e) => e.stopPropagation()}
       >
 
-         {post.images?.length > 0 && (<div className="w-[55%] bg-black flex items-center justify-center shrink-0 relative">
+         {post.images?.length > 0 && (<div className="hidden md:flex w-[55%] bg-black items-center justify-center shrink-0 relative max-h-64 md:max-h-full">
          
             <>
               <img
@@ -68,7 +68,7 @@ export default function PostModal({ post, onClose, onLike, onCommentAdded, onSav
           
         </div>)}
 
-        <div className="flex-1 flex flex-col min-h-[500px] max-h-[90vh] overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-[300px] md:min-h-[500px]">
 
           <div className="flex items-center justify-between px-5 py-4"
             style={{ borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
@@ -109,7 +109,7 @@ export default function PostModal({ post, onClose, onLike, onCommentAdded, onSav
             </p>
           </div>
 
-          <div className="flex-1 overflow-hidden px-5 py-3">
+          <div className="flex-1 overflow-y-auto px-5 py-3">
             <CommentSection
               postId={post._id}
               postAuthorId={post.author?._id}
