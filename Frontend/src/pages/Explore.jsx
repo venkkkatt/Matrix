@@ -4,15 +4,24 @@ import api from "../api/axios";
 import { toast } from "sonner";
 import { UserPlus, UserCheck, TrendingUp, Star, Clock } from "lucide-react";
 import useAuthStore from "../store/authStore";
+import PostFeed from "@/components/feed/PostFeed";
 
 export default function Explore() {
   const [users, setUsers] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [following, setFollowing] = useState([]);
-  const { user: currentUser } = useAuthStore();
+  const { user: currentUser, login } = useAuthStore();
+  const [following, setFollowing] = useState(
+    currentUser?.following?.map((f) => f._id?.toString() || f.toString()) || []
+  );
+  const followingIds = currentUser?.following?.map((f) =>
+    typeof f === "object" ? f._id?.toString() : f?.toString()
+  ) || [];
 
+  
   useEffect(() => {
     fetchUsers();
+    fetchSuggestions();
   }, []);
 
   const fetchUsers = async () => {
@@ -26,22 +35,29 @@ export default function Explore() {
     }
   };
 
+  const fetchSuggestions = async () => {
+    const res = await api.get("/users/suggestions");
+    setSuggestions(res.data.users);
+  }
+
   const handleFollow = async (userId) => {
     try {
       await api.put(`/users/follow/${userId}`);
-      setFollowing((prev) =>
-        prev.includes(userId)
-          ? prev.filter((id) => id !== userId)
-          : [...prev, userId]
-      );
-    } catch {
+      
+      const isFollowing = followingIds.includes(userId.toString());
+      const updatedFollowing = isFollowing
+        ? currentUser.following.filter((f) => {
+            const id = typeof f === "object" ? f._id?.toString() : f?.toString();
+            return id !== userId.toString();
+          })
+        : [...(currentUser.following || []), userId];
+
+      login({ ...currentUser, following: updatedFollowing });
+    } catch (error) {
+      console.log(error)
       toast.error("Failed to follow");
     }
   };
-
-  const topUsers = [...users].sort((a, b) => b.followers.length - a.followers.length).slice(0, 6);
-  const trendingUsers = [...users].sort((a, b) => b.followers.length - a.followers.length).slice(6, 12);
-  const newUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
 
   if (loading) {
     return (
@@ -55,35 +71,29 @@ export default function Explore() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-black tracking-tight">Explore</h1>
-        <p className="text-[13px] text-white/25 mt-0.5">Discover people on Matrix</p>
+        <p className="text-[13px] text-white/25 mt-0.5">Discover people, communities and more</p>
       </div>
 
       <UserSection
-        title="Top Users"
+        title="Suggested Users"
         icon={<Star size={14} />}
-        users={topUsers}
-        following={following}
+        users={suggestions}
+        followingIds={followingIds}
         onFollow={handleFollow}
       />
-      <UserSection
-        title="Trending"
-        icon={<TrendingUp size={14} />}
-        users={trendingUsers}
-        following={following}
-        onFollow={handleFollow}
-      />
-      <UserSection
-        title="New to Matrix"
-        icon={<Clock size={14} />}
-        users={newUsers}
-        following={following}
-        onFollow={handleFollow}
-      />
+
+      <div className="flex items-center gap-2">
+        <span className="text-green-400"><TrendingUp size={14} /></span>
+        <h2 className="text-[14px] font-semibold text-white/70 uppercase tracking-widest">Trending Posts</h2>
+      </div>
+      
+      <PostFeed endpoint={"/posts/trending"} title={""} subtitle={""}/>
+
     </div>
   );
 }
 
-function UserSection({ title, icon, users, following, onFollow }) {
+function UserSection({ title, icon, users, followingIds, onFollow }) {
   if (users.length === 0) return null;
   return (
     <div className="mb-10">
@@ -93,7 +103,7 @@ function UserSection({ title, icon, users, following, onFollow }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         {users.map((u) => (
-          <UserCard key={u._id} user={u} isFollowing={following.includes(u._id)} onFollow={() => onFollow(u._id)} />
+          <UserCard key={u._id} user={u} isFollowing={followingIds.includes(u._id?.toString())} onFollow={() => onFollow(u._id)} />
         ))}
       </div>
     </div>

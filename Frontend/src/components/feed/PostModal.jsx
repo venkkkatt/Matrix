@@ -2,16 +2,18 @@ import { useEffect, useState } from "react";
 import { X, Heart, Share2, Bookmark } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import useAuthStore from "../../store/authStore";
+import api from "@/api/axios";
 import Avatar from "../shared/Avatar";
 import CommentSection from "./CommentSection";
 
-export default function PostModal({ post, onClose, onLike, onCommentAdded }) {
-  const { user } = useAuthStore();
+export default function PostModal({ post, onClose, onLike, onCommentAdded, onSaveToggle }) {
+  const { user, login } = useAuthStore();
   const [liked, setLiked] = useState(post.likes.includes(user?._id));
   const [likeCount, setLikeCount] = useState(post.likes.length);
-  const [saved, setSaved] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
+  const saved = user?.savedPosts?.some((id) => id.toString() === post._id.toString());
 
   useEffect(() => {
     const handler = (e) => e.key === "Escape" && onClose();
@@ -20,10 +22,10 @@ export default function PostModal({ post, onClose, onLike, onCommentAdded }) {
   }, [onClose]);
 
   const handleLike = () => {
-  onLike(post._id);
-  setLiked(!liked);
-  setLikeCount((prev) => liked ? prev - 1 : prev + 1);
-};
+    onLike(post._id);
+    setLiked(!liked);
+    setLikeCount((prev) => liked ? prev - 1 : prev + 1);
+  };
 
   return (
     <div
@@ -134,7 +136,7 @@ export default function PostModal({ post, onClose, onLike, onCommentAdded }) {
             </button>
 
             <button
-              onClick={() => setSaved(!saved)}
+              onClick={(e) => onSaveToggle(post._id)}
               className={`ml-auto text-[13px] transition-all ${
                 saved ? "text-green-400" : "text-white/30 hover:text-green-400"
               }`}

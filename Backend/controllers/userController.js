@@ -1,8 +1,10 @@
 const User = require("../models/User");
-const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
 const validator = require("validator");
+const asyncHandler = require("express-async-handler")
+const ErrorHandler = require("../utils/ErrorHandler")
 const Post = require("../models/Post")
+const cloudinary = require("../config/cloudinary");
 
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -29,11 +31,7 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-const registerUser = async (req, res) => {
-  try {
-
-    console.log("REQ FILE:", req.file);
-
+const registerUser = asyncHandler(async (req, res, next) => {
 
     const {
       userName,
@@ -48,24 +46,15 @@ const registerUser = async (req, res) => {
     } = req.body;
 
     if (!userName || !fullName || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Required fields are missing",
-      });
+      return next(new ErrorHandler("User not found", 404));
     }
 
     if (!validator.isEmail(email)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email",
-      });
+      return next(new ErrorHandler("Invalid email", 400));
     }
 
     if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 6 characters",
-      });
+      return next(new ErrorHandler("Password should have more than 6 characters", 400));
     }
 
     const existingUser = await User.findOne({
@@ -73,10 +62,7 @@ const registerUser = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "User already exists",
-      });
+      return next(new ErrorHandler("User already exists", 409));
     }
 
     let profilePicData = {
@@ -87,7 +73,7 @@ const registerUser = async (req, res) => {
     if (req.file) {
       const uploadedImage = await uploadToCloudinary(req.file.buffer);
 
-      profilePicData = {
+    profilePicData = {
         public_id: uploadedImage.public_id,
         url: uploadedImage.secure_url,
       };
@@ -102,7 +88,7 @@ const registerUser = async (req, res) => {
       dept,
       phone,
       bio,
-      profilePic : profilePicData
+      profilePic : profilePicData 
     });
 
     const token = user.generateJWT();
@@ -114,15 +100,7 @@ const registerUser = async (req, res) => {
       message: `Hello, ${user.userName}`,
       user,
     });
-  } catch (error) {
-    console.error("REGISTER ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
+});
 
 const loginUser = async (req, res) => {
   try {
@@ -172,20 +150,22 @@ const loginUser = async (req, res) => {
   }
 };
 
-const logoutUser = async (req, res) => {
+const logoutUser = asyncHandler(async(req, res, next) => {
+
   res.clearCookie("token", cookieOptions);
 
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
   });
-}
+})
 
 const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate("followers", "userName profilePic")
-      .populate("following", "userName profilePic");
+      .populate("following", "userName profilePic")
+      .populate("savedPosts")
 
     if (!user) {
       return res.status(404).json({
@@ -236,11 +216,12 @@ const followUser = async (req, res) => {
         }
 
         await currentUser.save();
-    await userToFollow.save();
+        await userToFollow.save();
 
     res.status(200).json({
       success: true,
-      following: !isFollowing,
+      following: currentUser.following,
+      isFollowing: isFollowing,
       message: isFollowing ? `Unfollowed ${userToFollow.userName}` : `Following ${userToFollow.userName}`,
     });
     } catch (error) {
@@ -258,8 +239,11 @@ const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
+    const postsCount = await Post.countDocuments({
+      author: user._id, community: null
+    });
 
-    res.status(200).json({ success: true, user });
+    res.status(200).json({ success: true, user, postsCount });
   } catch (error) {
     console.error("GET PROFILE ERROR:", error);
     res.status(500).json({ success: false, message: "Server Error" });
@@ -301,10 +285,11 @@ const getSavedPosts = async (req, res) => {
         path: "savedPosts",
         populate: { path: "author", select: "userName fullName profilePic dept" },
       });
+      
 
     res.status(200).json({
       success: true,
-      savedPosts: user.savedPosts,
+      posts: user.savedPosts,
     });
   } catch (error) {
     console.error("GET SAVED ERROR:", error);
@@ -312,34 +297,28 @@ const getSavedPosts = async (req, res) => {
   }
 };
 
-const getUserPosts = async (req, res) => {
-  try {
-    const user = await User.findOne({ userName: req.params.username });
+const getUserPosts = asyncHandler( async (req, res, next) => {
+
+  const user = await User.findOne({ userName: req.params.username });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return next(new ErrorHandler("User not found", 404))
     }
-    const posts = await Post.find({ author: user._id })
+    const posts = await Post.find({ author: user._id, community: null })
       .populate("author", "userName fullName profilePic dept")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, posts });
-  } catch (error) {
-    console.error("GET USER POSTS ERROR:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
+  
+});
 
-const getAllUsers = async (req, res) => {
-  try {
+const getAllUsers = asyncHandler(async (req, res) => {
     const users = await User.find({ _id: { $ne: req.user._id } })
       .select("userName fullName profilePic dept followers createdAt")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, users });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
+  
+});
 
 const updateProfile = async (req, res) => {
   try {
@@ -388,6 +367,16 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const getSuggestions = asyncHandler(async (req, res, next) => {
+  
+    const users = await User.find({ _id: { $nin: [req.user._id, ...req.user.following] } })
+      .select("userName fullName profilePic dept followers")
+      .limit(5);
+
+    res.status(200).json({ success: true, users });
+
+})
+
 module.exports = {
   registerUser,
   loginUser,
@@ -399,5 +388,6 @@ module.exports = {
   getSavedPosts,
   getUserPosts, 
   getAllUsers, 
-  updateProfile
+  updateProfile,
+  getSuggestions
 };

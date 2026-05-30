@@ -7,14 +7,14 @@ import { toast } from "sonner";
 import Avatar from "../shared/Avatar";
 import api from "../../api/axios";
 
-export default function PostCard({ post, onLike, onClick, onDelete }) {
+export default function PostCard({ post, onLike, onClick, onDelete, onSaveToggle }) {
   const { user } = useAuthStore();
   const isLiked = post.likes.includes(user?._id);
   const isOwner = post.author?._id === user?._id;
-  const [saved, setSaved] = useState(false);
+  const saved = user?.savedPosts?.some((id) => id.toString() === post._id.toString());  
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
-
+  
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -25,29 +25,6 @@ export default function PostCard({ post, onLike, onClick, onDelete }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleSave = async (e) => {
-    e.stopPropagation();
-    try {
-      const res = await api.put(`/users/save/${post._id}`);
-      setSaved(res.data.saved);
-      toast.success(res.data.message);
-      onSaveToggle?.(post._id, res.data.saved);
-    } catch {
-      toast.error("Failed to save post");
-    }
-  };
-
-  const handleDelete = async (e) => {
-    e.stopPropagation();
-    try {
-      await api.delete(`/posts/${post._id}`);
-      toast.success("Post deleted");
-      onDelete?.(post._id);
-      setShowMenu(false);
-    } catch {
-      toast.error("Failed to delete post");
-    }
-  };
 
   const handleShare = async (e) => {
     e.stopPropagation();
@@ -65,12 +42,10 @@ export default function PostCard({ post, onLike, onClick, onDelete }) {
     setShowMenu(false);
   };
 
-  console.log(post)
-
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer rounded-2xl p-4 transition-all hover:scale-[1.01]"
+      className="cursor-pointer rounded-2xl p-4 mb-8 transition-all hover:scale-[1.01]"
       style={{
         background: "rgba(255,255,255,0.03)",
         backdropFilter: "blur(12px)",
@@ -125,7 +100,7 @@ export default function PostCard({ post, onLike, onClick, onDelete }) {
                   </button>
                   <div className="border-t border-white/5" />
                   <button
-                    onClick={handleDelete}
+                    onClick={(e) => {e.stopPropagation(); onDelete(post._id); setShowMenu(false);}}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-400 hover:bg-red-500/10 transition-all"
                   >
                     <Trash2 size={14} />
@@ -193,7 +168,10 @@ export default function PostCard({ post, onLike, onClick, onDelete }) {
         </button>
   
         <button
-          onClick={handleSave}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSaveToggle(post._id);
+          }}
           className={`ml-auto text-[12px] transition-all ${
             saved ? "text-green-400" : "text-white/30 hover:text-green-400"
           }`}

@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const express = require("express");
 const connectDB = require("./config/db.js");
 const cors = require("cors");
@@ -9,6 +8,8 @@ const userRouter = require("./routes/userRoutes");
 const postRouter = require("./routes/postRoutes");
 const communityRouter = require("./routes/communityRoutes")
 const eventRouter = require("./routes/eventRoutes")
+const errorMiddleware = require("./middleware/errorMiddleware");
+
 
 const app = express();
 
@@ -46,8 +47,11 @@ app.use((req, res) => {
   });
 });
 
+app.use(errorMiddleware);
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+

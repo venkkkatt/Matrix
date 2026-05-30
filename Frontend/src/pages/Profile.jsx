@@ -5,42 +5,39 @@ import { toast } from "sonner";
 import { Grid, Bookmark, UserCheck, UserPlus, X } from "lucide-react";
 import api from "../api/axios";
 import useAuthStore from "../store/authStore";
-import PostCard from "../components/feed/PostCard";
-import PostModal from "../components/feed/PostModal";
-
+import PostFeed from "@/components/feed/PostFeed";
 
 export default function Profile() {
   const { username } = useParams();
   const { user: currentUser } = useAuthStore();
   const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [selectedPostId, setSelectedPostId] = useState(null);
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
 
-  const selectedPost = posts.find((p) => p._id === selectedPostId) || null;
   const isOwner = currentUser?.userName === username;
   const navigate = useNavigate();
 
   useEffect(() => {
   if (!username && currentUser?.userName) {
     navigate(`/profile/${currentUser.userName}`);
-  }
-}, [username, currentUser]);
+    }
+  }, [username, currentUser]);
 
   useEffect(() => {
     fetchProfile();
-    fetchPosts();
     setActiveTab("posts"); 
   }, [username]);
 
   const fetchProfile = async () => {
     try {
       const res = await api.get(`/users/profile/${username}`);
-      setProfile(res.data.user);
+      setProfile({
+        ...res.data.user,
+        postsCount: res.data.postsCount,
+      });
       setIsFollowing(
         res.data.user.followers.some((f) => f._id === currentUser?._id)
       );
@@ -49,13 +46,6 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchPosts = async () => {
-    try {
-      const res = await api.get(`/users/profile/${username}/posts`);
-      setPosts(res.data.posts);
-    } catch {}
   };
 
   const handleFollow = async () => {
@@ -73,36 +63,6 @@ export default function Profile() {
     }
   };
 
-  const handleLike = async (postId) => {
-    try {
-      await api.put(`/posts/${postId}/like`);
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p._id !== postId) return p;
-          const alreadyLiked = p.likes.includes(currentUser._id);
-          return {
-            ...p,
-            likes: alreadyLiked
-              ? p.likes.filter((id) => id !== currentUser._id)
-              : [...p.likes, currentUser._id],
-          };
-        })
-      );
-    } catch {
-      toast.error("Failed to like");
-    }
-  };
-
-  const handleDelete = (postId) => {
-    setPosts((prev) => prev.filter((p) => p._id !== postId));
-  };
-
-  const handleCommentAdded = (postId, newComments) => {
-    setPosts((prev) =>
-      prev.map((p) => p._id === postId ? { ...p, comments: newComments } : p)
-    );
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,6 +78,7 @@ export default function Profile() {
       </div>
     );
   }
+  const endPoint = activeTab !== "saved" ? `/users/profile/${username}/posts` : `/users/saved`
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -131,7 +92,6 @@ export default function Profile() {
       >
         <div className="flex items-start gap-6">
 
-          {/* Avatar */}
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center text-2xl font-black text-black shrink-0 overflow-hidden">
             {profile.profilePic?.url
               ? <img src={profile.profilePic.url} className="w-full h-full object-cover" alt="" />
@@ -176,10 +136,9 @@ export default function Profile() {
               <p className="text-[13px] text-white/50 mt-2 leading-relaxed">{profile.bio}</p>
             )}
 
-            {/* Stats */}
             <div className="flex gap-5 mt-4">
               <div className="text-center">
-                <p className="text-[16px] font-black">{posts.length}</p>
+                <p className="text-[16px] font-black">{profile.postsCount}</p>
                 <p className="text-[11px] text-white/30">Posts</p>
               </div>
               <button
@@ -227,34 +186,7 @@ export default function Profile() {
         )}
       </div>
 
-      {posts.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">📭</p>
-          <p className="text-white/30 text-[14px]">No posts yet</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {posts.map((post) => (
-            <PostCard
-              key={post._id}
-              post={post}
-              onLike={handleLike}
-              onClick={() => setSelectedPostId(post._id)}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
-
-      {selectedPost && (
-        <PostModal
-          post={selectedPost}
-          onClose={() => setSelectedPostId(null)}
-          onLike={handleLike}
-          onCommentAdded={handleCommentAdded}
-          onDelete={handleDelete}
-        />
-      )}
+      <PostFeed endpoint={endPoint} />
 
       {showFollowers && (
         <UsersModal
@@ -301,8 +233,10 @@ function UsersModal({ title, users, onClose }) {
           {users?.length === 0 ? (
             <p className="text-center text-white/25 text-[13px] py-8">No {title.toLowerCase()} yet</p>
           ) : (
+           
             users?.map((u) => (
-              <div key={u._id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/3 transition-all">
+               <Link key={u._id} to={`/profile/${u.userName}`} onClick={onClose}>
+              <div  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/3 transition-all">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center text-[12px] font-bold text-black shrink-0 overflow-hidden">
                   {u.profilePic?.url
                     ? <img src={u.profilePic.url} className="w-full h-full object-cover" alt="" />
@@ -313,7 +247,8 @@ function UsersModal({ title, users, onClose }) {
                   <p className="text-[13px] font-medium text-white/85">{u.fullName}</p>
                   <p className="text-[11px] text-white/30">@{u.userName}</p>
                 </div>
-              </div>
+              </div> 
+              </Link>
             ))
           )}
         </div>

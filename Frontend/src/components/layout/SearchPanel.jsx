@@ -4,12 +4,13 @@ import { Link } from "react-router-dom";
 import api from "../../api/axios";
 import { toast } from "sonner";
 import Avatar from "../shared/Avatar";
+import useAuthStore from "@/store/authStore";
 
 export default function SearchPanel({ onClose }) {
+  const {user, login} = useAuthStore();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [following, setFollowing] = useState([]);
 
   const handleSearch = async (q) => {
     setQuery(q);
@@ -26,11 +27,15 @@ export default function SearchPanel({ onClose }) {
 
   const handleFollow = async (userId) => {
     try {
-      await api.put(`/users/follow/${userId}`);
-      setFollowing((prev) =>
-        prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
-      );
-    } catch {
+      const res = await api.put(`/users/follow/${userId}`);
+     console.log("following",res.data.following);
+      login({
+      ...user,
+      following: res.data.following
+    });
+    console.log(res.data.following);
+    } catch (e) {
+      console.log(e)
       toast.error("Failed to follow");
     }
   };
@@ -75,10 +80,10 @@ export default function SearchPanel({ onClose }) {
             <button
               onClick={() => handleFollow(u._id)}
               className={`shrink-0 p-1.5 rounded-lg transition-all ${
-                following.includes(u._id) ? "text-green-400 bg-green-400/10" : "text-white/30 hover:text-green-400 hover:bg-green-400/10"
+                 user?.following?.some((id) => id.toString() === u._id.toString()) ? "text-green-400 bg-green-400/10" : "text-white/30 hover:text-green-400 hover:bg-green-400/10"
               }`}
             >
-              {following.includes(u._id) ? <UserCheck size={14} /> : <UserPlus size={14} />}
+              {user?.following?.some((id) => id.toString() === u._id.toString()) ? <UserCheck size={14} /> : <UserPlus size={14} />}
             </button>
           </div>
         ))}

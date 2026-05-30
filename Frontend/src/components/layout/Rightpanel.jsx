@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import api from "../../api/axios";
+import useAuthStore from "@/store/authStore";
 
 export default function Rightpanel() {
   const [events, setEvents] = useState([]);
   const [popularPosts, setPopularPosts] = useState([]);
-
   const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [following, setFollowing] = useState([]);
+  const {user: currentUser, login} = useAuthStore();
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -14,7 +18,11 @@ export default function Rightpanel() {
         const res = await api.get("/users/suggestions");
         setSuggestions(res.data.users || []);
       } catch {
+        toast.error("Failed to load suggestions")
       }
+       finally {
+        setSuggestionsLoading(false);
+       }
     };
     fetchSuggestions();
   }, []);
@@ -22,11 +30,19 @@ export default function Rightpanel() {
   const handleFollow = async (userId) => {
     try {
       await api.put(`/users/follow/${userId}`);
-      setFollowing((prev) =>
-        prev.includes(userId)
-          ? prev.filter((id) => id !== userId)
-          : [...prev, userId]
-      );
+          const updatedFollowing = currentUser.following.includes(userId)
+      ? currentUser.following.filter((id) => id !== userId)
+      : [...currentUser.following, userId];
+
+    login({
+      ...currentUser,
+      following: updatedFollowing,
+    });
+
+    setSuggestions((prev) =>
+      prev.filter((u) => u._id !== userId)
+    );
+
     } catch {
       toast.error("Failed to follow");
     }
@@ -36,7 +52,11 @@ export default function Rightpanel() {
     const fetchEvents = async () => {
       try {
         const res = await api.get("/events");
-        setEvents(res.data.events || []);
+        const upcomingEvents = (res.data.events || [])
+        .filter(  (event) => new Date(event.date) > new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        setEvents(upcomingEvents);
       }
       catch (error) {
         console.log(error)
@@ -49,9 +69,8 @@ export default function Rightpanel() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get("/posts/feed");
-        const sorted = [...res.data.posts].sort((a, b) => b.likes.length - a.likes.length);
-        setPopularPosts(sorted.slice(0, 3));
+        const res = await api.get("/posts/popular");
+        setPopularPosts((res.data.posts || []).slice(0, 3));
       } catch {}
     };
     fetchData();
@@ -160,22 +179,16 @@ export default function Rightpanel() {
           ))
         )}
       </div>
-
      
-        <p className="text-[13px] my-5 tracking-widest uppercase text-white/25 mb-3 px-1">
+      <p className="text-[13px] my-5 tracking-widest uppercase text-white/25 mb-3 px-1">
         Who to follow
       </p>
-       <div className="flex flex-col gap-2 mb-5">
-        {suggestions.length > 0 ? suggestions.map((u) => (
-          <SuggestionCard
-            key={u._id}
-            user={u}
-            isFollowing={following.includes(u._id)}
-            onFollow={() => handleFollow(u._id)}
-          />
-        )) : (
+       {suggestionsLoading ? (
           [..."APRS"].map((letter, i) => (
-            <div key={i} className="flex items-center gap-2 p-2 rounded-lg animate-pulse">
+            <div
+              key={i}
+              className="flex items-center gap-2 p-2 rounded-lg animate-pulse"
+            >
               <div className="w-8 h-8 rounded-full bg-white/5 shrink-0" />
               <div className="flex-1 space-y-1">
                 <div className="h-2.5 bg-white/5 rounded w-3/4" />
@@ -183,8 +196,22 @@ export default function Rightpanel() {
               </div>
             </div>
           ))
+        ) : suggestions.length > 0 ? (
+          suggestions.map((u) => (
+            <Link key={u._id} to={`/profile/${u.userName}`}>
+            <SuggestionCard
+              user={u}
+              isFollowing={following.includes(u._id)}
+              onFollow={() => handleFollow(u._id)}
+            />
+            </Link>
+          ))
+        ) : (
+          <p className="text-[12px] text-white/25 px-1">
+            No suggestions available
+          </p>
         )}
-      </div>
+              
 
       <p className="text-[10px] text-white/15 text-center mt-6">Matrix © 2026</p>
     </aside>
@@ -209,7 +236,11 @@ function SuggestionCard({ user, isFollowing, onFollow }) {
         </p>
       </div>
       <button
-        onClick={onFollow}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onFollow();
+        }}
         className={`text-[10px] px-2 py-1 rounded-full items-center border shrink-0 transition-all ${
           isFollowing
             ? "border-white/10 text-white/30"

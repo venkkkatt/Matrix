@@ -108,7 +108,7 @@ export default function Sidebar({ collapsed, onToggle }) {
     return (
       <>
         <aside className="sticky top-0 h-screen bg-[#030403] flex flex-col px-3 py-5 overflow-y-auto border-white/5">
-          <Link to="/" className={`font-array font-black tracking-tight text-white px-2 mb-6 ${collapsed ? "text-xl" : "text-2xl lg:text-3xl"}`}>
+          <Link to="/" className={`font-array tracking-tight text-white px-2 mb-6 ${collapsed ? "text-xl" : "text-2xl lg:text-3xl"}`}>
             {collapsed ? "M" : "MATRIX"}
           </Link>
           <nav className="flex-1 flex flex-col gap-4">

@@ -1,6 +1,9 @@
 const Post = require("../models/Post");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
+const asyncHandler = require("express-async-handler")
+const ErrorHandler = require("../utils/ErrorHandler")
+const User = require("../models/User")
 
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -50,15 +53,30 @@ const createPost = async (req, res) => {
 
 const getFeed = async (req, res) => {
   try {
-    const posts = await Post.find( {community: null})
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+    res.status(404).json({
+      success: false,
+      message: "User not found",
+    }); 
+    }
+    const followingIds = [...user.following, user._id]
+
+    const posts = await Post.find( {
+      community: null, 
+      author: {
+        $in: followingIds
+      }})
       .populate("author", "fullName userName profilePic")
       .populate("comments.user", "userName profilePic")
       .sort({ createdAt: -1 });
-    console.log(posts)
+
     res.status(200).json({
-      success: true,
-      posts,
-    });
+    success: true,
+    posts});
+    
+
   } catch (error) {
     console.error("FEED ERROR:", error);
     res.status(500).json({ success: false, message: "Server Error" });
@@ -210,6 +228,84 @@ const deleteComment = async (req, res) => {
   }
 };
 
+const getPopularPosts = asyncHandler (async (req, res, next) => {
+    const posts = await Post.find({
+      community: null})
+      .populate("author", "fullName userName profilePic")
+      .populate("comments.user", "userName profilePic")
+      .sort({
+        likes: -1,
+        createdAt: -1
+      })
+
+      const popularPosts = posts.map((post) => {
+        
+        const likeScore = post.likes.length * 10;
+        const commentScore = post.comments.length * 2;
+
+        const score = likeScore + commentScore;
+
+        return {
+          ...post.toObject(),
+          score,
+        };
+      }).sort((a,b) => b.score - a.score)
+      
+      res.status(200).json({
+        success: true,
+        posts: popularPosts
+      })
+  
+})
+
+const getTrendingPosts = asyncHandler(async (req, res, next) => {
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const posts = await Post.find({
+      createdAt: { $gte: sevenDaysAgo },
+    })
+      .populate("author", "userName fullName profilePic dept")
+      .populate("comments.user", "userName profilePic")
+      .lean(); 
+
+    const now = Date.now();
+
+    const scoredPosts = posts.map((post) => {
+      const ageInHours = (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
+
+      const likesScore    = post.likes.length * 3;
+      const commentsScore = post.comments.length * 5;
+      const engagementScore = likesScore + commentsScore;
+
+      if (engagementScore < 5) return null;
+
+      const gravity = 1.2;
+      const decayFactor = Math.pow(ageInHours + 2, gravity);
+
+      const velocity = engagementScore / (ageInHours + 1);
+
+      const trendingScore = (engagementScore + velocity * 2) / decayFactor;
+      console.log(trendingScore)
+      return {
+        ...post,
+        trendingScore: parseFloat(trendingScore.toFixed(4)),
+        engagementScore,
+        velocity: parseFloat(velocity.toFixed(4)),
+      };
+    }).filter(Boolean);
+
+    scoredPosts.sort((a, b) => b.trendingScore - a.trendingScore);
+
+    const cleanPosts = scoredPosts.slice(0, 20).map(({ trendingScore, engagementScore, velocity, ...post }) => post);
+
+    res.status(200).json({
+      success: true,
+      posts: cleanPosts,
+    });
+})
+
 module.exports = {
   createPost,
   getFeed,
@@ -218,4 +314,6 @@ module.exports = {
   addComment,
   deleteComment,
   deletePost,
+  getPopularPosts,
+  getTrendingPosts
 };
