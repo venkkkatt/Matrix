@@ -16,7 +16,10 @@ const app = express();
 connectDB();
 
 app.use(cors({
-   origin: "http://localhost:5173",
+   origin: [
+      "http://localhost:5173",
+      "https://matrix-web-rouge.vercel.app/"
+    ],
    credentials: true,
 }));
 
