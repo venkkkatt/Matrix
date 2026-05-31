@@ -92,6 +92,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     });
 
     const token = user.generateJWT();
+    console.log(process.env.NODE_ENV)
 
     res.cookie("token", token, cookieOptions);
 
